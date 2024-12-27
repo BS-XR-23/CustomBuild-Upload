@@ -4,8 +4,8 @@ using UnityEngine.Networking;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
-using EasyAPIPlugin;
 using Debug = UnityEngine.Debug;
 
 public class UpdateManager : MonoBehaviour
@@ -20,32 +20,32 @@ public class UpdateManager : MonoBehaviour
         // Debug.Log("Checking for updates...");
         // await DownloadAndUpdate(UpdateUrl);
         // Debug.Log("file downloaded");
-        Debug.Log("localPath"+localPath);
+        Debug.Log($"localPath{localPath},application name:{Application.persistentDataPath},{Application.productName}");
         // ReplaceFiles2(Path.Combine(Application.persistentDataPath, "extracted/test.app/Contents"));
         // RestartApplication2();
         ReplaceFilesWithUpdater(Path.Combine(Application.persistentDataPath, "extracted"));
     }
-    private async Task DownloadAndUpdate(string downloadUrl)
-    {
-        Debug.Log("download: " + downloadUrl);
-        string tempPath = Path.Combine(Application.persistentDataPath, "update.zip");
+    //private async Task DownloadAndUpdate(string downloadUrl)
+    //{
+    //    Debug.Log("download: " + downloadUrl);
+    //    string tempPath = Path.Combine(Application.persistentDataPath, "update.zip");
 
-        byte[] data=await EasyAPI.DownloadFile(UpdateUrl,onSuccess:(data)=>Debug.Log($"Downloaded:{data}"));
-        File.WriteAllBytes(tempPath,data);
+    //    byte[] data=await EasyAPI.DownloadFile(UpdateUrl,onSuccess:(data)=>Debug.Log($"Downloaded:{data}"));
+    //    File.WriteAllBytes(tempPath,data);
         
-        Debug.Log("Update downloaded. Extracting...");
-        string extractedPath = Path.Combine(Application.persistentDataPath, "extracted");
+    //    Debug.Log("Update downloaded. Extracting...");
+    //    string extractedPath = Path.Combine(Application.persistentDataPath, "extracted");
             
-        if (Directory.Exists(extractedPath))
-            Directory.Delete(extractedPath, true);
+    //    if (Directory.Exists(extractedPath))
+    //        Directory.Delete(extractedPath, true);
             
-        ZipFile.ExtractToDirectory(tempPath, extractedPath);
+    //    ZipFile.ExtractToDirectory(tempPath, extractedPath);
 
-        Debug.Log("Update extracted. Replacing files...");
-        ReplaceFiles(extractedPath);
-        // Debug.Log("Restarting application...");
-        RestartApplication();
-    }
+    //    Debug.Log("Update extracted. Replacing files...");
+    //    ReplaceFiles(extractedPath);
+    //    // Debug.Log("Restarting application...");
+    //    RestartApplication();
+    //}
 
     private void ReplaceFiles(string extractedPath)
     {
@@ -66,31 +66,44 @@ public class UpdateManager : MonoBehaviour
     private void ReplaceFilesWithUpdater(string extractedPath)
     {
         string updaterScriptPath = Path.Combine(Application.temporaryCachePath, "updater.bat"); // Use .sh for macOS/Linux
-
+        string[] files = Directory.GetFiles(extractedPath, "*.exe", SearchOption.TopDirectoryOnly);
+        string exePath = files.FirstOrDefault(file => !files.Contains("UnityCrashHandler64"));
+        string exeName=Path.GetFileName(exePath);
+        string destination=Path.Combine(Application.dataPath,"..");
+       
+        //string exePath2 = System.Reflection.Assembly.GetEntryAssembly().Location;
+        //string exeName2 = Path.GetFileName(exePath2); // Get the filename (e.g., "MyApp.exe")
+        Debug.Log($"Exe Path:{exeName}");
         // Create the updater script
         using (StreamWriter writer = new StreamWriter(updaterScriptPath))
         {
             // Windows Batch Script Example
-            writer.WriteLine("@echo off");
-            writer.WriteLine("timeout /t 2 > nul"); // Wait for 2 seconds to ensure the main app exits
-            writer.WriteLine($"xcopy /Y /E \"{extractedPath}\" \"{Application.dataPath}\\..\""); // Copy files to app folder
-            writer.WriteLine($"start \"\" \"{Application.dataPath}\\..\\MyGame.exe\""); // Relaunch the app
+            writer.WriteLine("@echo on");
+            writer.WriteLine($"taskkill /IM \"{exeName}\" /F > nul 2>&1"); // Kill the running app
+            writer.WriteLine("timeout /t 2 > nul"); // Wait for 2 seconds to ensure it's closed
+            writer.WriteLine($"xcopy /Y /E /I \"{extractedPath}\" \"{destination}\""); // Copy files to app folder
+            writer.WriteLine($"start \"\" \"{Application.dataPath}\\..\\{exeName}\""); // Relaunch the app
             writer.WriteLine("exit");
         }
-
-        // Run the updater script as a separate process
-        Process updaterProcess = Process.Start(new ProcessStartInfo
+        try
         {
-            FileName = updaterScriptPath,
-            UseShellExecute = true,
-            CreateNoWindow = true
-        });
+            // Run the updater script as a separate process
+            Process updaterProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = updaterScriptPath,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            });
 
-        // Wait for the updater process to exit before quitting the app
-        updaterProcess.WaitForExit();
-
+            // Wait for the updater process to exit before quitting the app
+            updaterProcess.WaitForExit();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception: {e.Message}");
+        }
         // Quit the application after the update process finishes
-        Application.Quit();
+        //Application.Quit();
     }
 
 
