@@ -22,8 +22,8 @@ public class UpdateManager : MonoBehaviour
         // Debug.Log("file downloaded");
         Debug.Log($"localPath{localPath},application name:{Application.persistentDataPath},{Application.productName}");
         // ReplaceFiles2(Path.Combine(Application.persistentDataPath, "extracted/test.app/Contents"));
-        // RestartApplication2();
-        ReplaceFilesWithUpdater(Path.Combine(Application.persistentDataPath, "extracted"));
+        RestartApplication2();
+        //ReplaceFilesWithUpdater(Path.Combine(Application.persistentDataPath, "extracted"));
     }
     //private async Task DownloadAndUpdate(string downloadUrl)
     //{
@@ -63,26 +63,33 @@ public class UpdateManager : MonoBehaviour
             File.Copy(file, destinationPath);
         }
     }
+    private string GetExeName(string extractedPath)
+    {
+        string[] files = Directory.GetFiles(extractedPath, "*.exe", SearchOption.TopDirectoryOnly);
+        string exePath = files.FirstOrDefault(file => !files.Contains("UnityCrashHandler64"));
+        string exeName = Path.GetFileName(exePath);
+        return exeName;
+    }
     private void ReplaceFilesWithUpdater(string extractedPath)
     {
         string updaterScriptPath = Path.Combine(Application.temporaryCachePath, "updater.bat"); // Use .sh for macOS/Linux
-        string[] files = Directory.GetFiles(extractedPath, "*.exe", SearchOption.TopDirectoryOnly);
-        string exePath = files.FirstOrDefault(file => !files.Contains("UnityCrashHandler64"));
-        string exeName=Path.GetFileName(exePath);
+        string newExeName=GetExeName(extractedPath);
         string destination=Path.Combine(Application.dataPath,"..");
+        string oldExeName=GetExeName(destination);
+
        
         //string exePath2 = System.Reflection.Assembly.GetEntryAssembly().Location;
         //string exeName2 = Path.GetFileName(exePath2); // Get the filename (e.g., "MyApp.exe")
-        Debug.Log($"Exe Path:{exeName}");
+        Debug.Log($"Exe Path:{newExeName}");
         // Create the updater script
         using (StreamWriter writer = new StreamWriter(updaterScriptPath))
         {
             // Windows Batch Script Example
             writer.WriteLine("@echo on");
-            writer.WriteLine($"taskkill /IM \"{exeName}\" /F > nul 2>&1"); // Kill the running app
+            writer.WriteLine($"taskkill /IM \"{oldExeName}\" /F > nul 2>&1"); // Kill the running app
             writer.WriteLine("timeout /t 2 > nul"); // Wait for 2 seconds to ensure it's closed
             writer.WriteLine($"xcopy /Y /E /I \"{extractedPath}\" \"{destination}\""); // Copy files to app folder
-            writer.WriteLine($"start \"\" \"{Application.dataPath}\\..\\{exeName}\""); // Relaunch the app
+            writer.WriteLine($"start \"\" \"{Application.dataPath}\\..\\{newExeName}\""); // Relaunch the app
             writer.WriteLine("exit");
         }
         try
@@ -130,15 +137,20 @@ public class UpdateManager : MonoBehaviour
         
         // Dynamically generate a Bash script
         string scriptPath = Path.Combine(Application.persistentDataPath, "launch_app.sh");
-
+        //ReplaceFiles2(Path.Combine(Application.persistentDataPath, "extracted/test.app/Contents"));
+        string sourcePath = Path.Combine(Application.persistentDataPath, "extracted/test.app/Contents");
+        string destinationPath = Application.dataPath;
         // Write the script to a file
         using (StreamWriter writer = new StreamWriter(scriptPath))
         {
             writer.WriteLine("#!/bin/bash");
+            writer.WriteLine($"cp -rf \"{sourcePath}/\" \"{destinationPath}/\"");
             writer.WriteLine($"open \"{appPath}\""); // Launch the app using `open`
+            writer.WriteLine($"exit 0"); // Launch the app using `open`
+
         }
         
-        // Make the script executable
+        // // Make the script executable
         var chmodProcess = new ProcessStartInfo
         {
             FileName = "chmod",
@@ -146,13 +158,7 @@ public class UpdateManager : MonoBehaviour
         };
         Process.Start(chmodProcess).WaitForExit(); // Ensure the script is executable
        
-        // Start a new instance of the application
-        // Start the Bash script
-        ProcessStartInfo startInfo = new ProcessStartInfo
-        {
-            FileName = "bash",
-            Arguments = scriptPath
-        };
+       
         RunScript(scriptPath);
     
     }
@@ -191,7 +197,7 @@ public class UpdateManager : MonoBehaviour
                 string output = process.StandardOutput.ReadToEnd();
                 string error = process.StandardError.ReadToEnd();
 
-                process.WaitForExit();
+                //process.WaitForExit();
                 Debug.Log("i am called:"+scriptPath);
 
                 // Debug logs for Unity
