@@ -8,7 +8,7 @@ namespace In.App.Update
 {
     public class WindowsAppUpdater: BaseAppUpdater
     {
-        public override void UpdateApp()
+        public override void StartNewBuild()
         {
             string scriptPath = CreateBatScript();
             RunBatScript(scriptPath);

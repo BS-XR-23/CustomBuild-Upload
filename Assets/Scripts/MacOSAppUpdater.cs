@@ -7,7 +7,7 @@ namespace In.App.Update
 {
     public class MacOSAppUpdater: BaseAppUpdater
     {
-        public override void UpdateApp()
+        public override void StartNewBuild()
         {
             string scriptPath = CreateBashScript();
             RunBashScript(scriptPath);

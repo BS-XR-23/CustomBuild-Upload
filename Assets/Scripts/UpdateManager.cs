@@ -32,7 +32,7 @@ public class UpdateManager : MonoBehaviour
     {
         if (updaters.ContainsKey(Application.platform))
         {
-            updaters[Application.platform].UpdateApp();
+            updaters[Application.platform].StartNewBuild();
         }
     }
     //private async Task DownloadAndUpdate(string downloadUrl)

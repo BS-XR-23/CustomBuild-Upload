@@ -2,6 +2,6 @@ namespace In.App.Update
 {
     public abstract class BaseAppUpdater
     {
-        public abstract void UpdateApp();
+        public abstract void StartNewBuild();
     }
 }
