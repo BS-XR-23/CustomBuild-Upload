@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using In.App.Update.DataModel;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -8,7 +9,7 @@ namespace In.App.Update
 {
     public class WindowsAppUpdater: BaseAppUpdater
     {
-        public override void StartNewBuild()
+        public override void StartNewBuild(VersionData versionData)
         {
             string scriptPath = CreateBatScript();
             RunBatScript(scriptPath);

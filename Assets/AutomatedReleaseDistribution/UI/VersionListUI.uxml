@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Styles.uss" />
+    <ui:VisualElement name="AccordionEntry" class="accordion-entry">
+        <ui:Button name="Header" class="accordion-header">
+            <ui:Label name="VersionName" />
+            <ui:Button name="DownloadButton" text="Download" />
+        </ui:Button>
+        <ui:VisualElement name="Content" class="accordion-content">
+            <ui:Label name="ReleaseTitle" class="release-title" />
+            <ui:Label name="ReleaseNotes" class="release-notes" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
