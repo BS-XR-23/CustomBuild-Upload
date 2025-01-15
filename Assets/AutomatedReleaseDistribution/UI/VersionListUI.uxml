@@ -1,13 +1,28 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
-    <ui:Style src="Styles.uss" />
-    <ui:VisualElement name="AccordionEntry" class="accordion-entry">
-        <ui:Button name="Header" class="accordion-header">
-            <ui:Label name="VersionName" />
-            <ui:Button name="DownloadButton" text="Download" />
-        </ui:Button>
-        <ui:VisualElement name="Content" class="accordion-content">
-            <ui:Label name="ReleaseTitle" class="release-title" />
-            <ui:Label name="ReleaseNotes" class="release-notes" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/AutomatedReleaseDistribution/UI/Styles.uss?fileID=7433441132597879392&amp;guid=5277a9c076f64250902e13f2efa1fc31&amp;type=3#Styles" />
+    <ui:Label text="Current Version: " name="CurrentVersion" style="color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 20px; margin-left: auto; margin-right: auto; margin-top: auto; margin-bottom: auto; position: absolute; align-items: center; justify-content: center; align-self: center; align-content: center; flex-direction: column; right: 0; bottom: 0; top: 0; left: 0; -unity-text-align: middle-center; display: flex;" />
+    <ui:VisualElement name="AccordionContainer" style="flex-grow: 1; display: none; max-width: 600px; width: 100%; margin-left: auto; margin-right: auto; margin-top: 30px; margin-bottom: 30px;">
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; max-width: none; background-color: rgb(255, 255, 255); justify-content: flex-end; align-items: center; padding-top: 60px; margin-bottom: 0; padding-bottom: 10px; height: 100%; display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
+            <ui:Label text="Available Versions" style="font-size: 18px; -unity-font-style: bold; position: absolute; top: 20px;" />
+            <ui:Button text="X" name="CloseButton" style="position: absolute; top: 10px; right: 23px; -unity-text-align: middle-center; color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 18px; border-top-left-radius: 50px; border-top-right-radius: 50px; border-bottom-right-radius: 50px; border-bottom-left-radius: 50px; width: 40px; height: 40px; background-color: rgb(135, 159, 128);" />
+            <ui:ScrollView name="ScrollView" style="width: 100%; max-width: 600px; height: 100%; padding-top: 0;">
+                <ui:VisualElement name="AccordionRoot" class="accordion-root" style="flex-grow: 1; width: 100%; max-width: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; background-color: rgb(255, 255, 255); padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px; overflow: hidden; flex-shrink: 0; height: auto; max-height: initial;" />
+            </ui:ScrollView>
         </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Button text="Update Available" name="UpdateButton" style="position: absolute; right: 50px; top: 50px; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; background-color: rgb(16, 147, 0); color: rgb(255, 255, 255); font-size: 16px; -unity-font-style: bold; border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; padding-top: 10px; padding-bottom: 10px; padding-left: 12px; padding-right: 12px;" />
+    <ui:VisualElement name="DialogBox" style="position: absolute; margin-left: auto; margin-right: auto; width: 100%; height: 100%; display: none;">
+        <ui:VisualElement class="dialog-box" style="left: auto; top: 50%; align-self: center; align-content: center; margin-top: auto; margin-bottom: auto; translate: 0 -50%;">
+            <ui:Label name="Message" text="Application need to re-start to show latest update" class="dialog-message" style="overflow: hidden; visibility: visible; -unity-text-align: upper-center;" />
+            <ui:VisualElement class="dialog-buttons" style="flex-direction: row; flex-wrap: nowrap; align-self: center;">
+                <ui:Button name="YesButton" text="OK" class="dialog-button" />
+                <ui:Button name="NoButton" text="No" class="dialog-button" style="display: none;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="download-dialog" class="download-dialog-container" style="position: absolute; align-self: center; align-content: center; top: 50%; translate: 0 -50%; display: none;">
+        <ui:Label text="Downloading..." class="dialog-title" />
+        <ui:ProgressBar name="progress-bar" value="2" class="dialog-progress-bar" />
+        <ui:Button text="Cancel" name="cancel-button" class="dialog-cancel-button" />
     </ui:VisualElement>
 </ui:UXML>

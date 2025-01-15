@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="AccordionEntry" class="accordion-entry" style="align-items: center; justify-content: center; align-self: center; align-content: center; width: 100%; max-width: none; margin-top: 10px; background-color: rgba(255, 255, 255, 0); padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-bottom: 10px; margin-right: 0; margin-left: 0;">
+        <ui:Button name="Header" class="accordion-header" style="display: flex; width: 100%; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; margin-top: 0; margin-right: 0; margin-left: 0; margin-bottom: 0;">
+            <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+                <ui:Label name="VersionName" text="v1.0.0" style="color: rgb(0, 0, 0); font-size: 20px;" />
+                <ui:Label name="ReleaseTitle" text="this is our first release" style="color: rgb(0, 0, 0); font-size: 16px;" />
+            </ui:VisualElement>
+            <ui:Button name="DownloadButton" text="Install" style="border-top-left-radius: 18px; border-top-right-radius: 18px; border-bottom-right-radius: 18px; border-bottom-left-radius: 18px; padding-top: 8px; padding-bottom: 8px; background-color: rgb(117, 135, 109); color: rgb(255, 255, 255); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; padding-right: 15px; padding-left: 15px; -unity-font-style: normal; font-size: 16px;" />
+        </ui:Button>
+        <ui:VisualElement name="Content" class="accordion-content" style="display: none; width: 100%;">
+            <ui:Label name="ReleaseTitle" class="release-title" />
+            <ui:Label name="ReleaseNotes" class="release-notes" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
