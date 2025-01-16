@@ -63,7 +63,7 @@ namespace In.App.Update
         private string GetExeName(string extractedPath)
         {
             string[] files = Directory.GetFiles(extractedPath, "*.exe", SearchOption.TopDirectoryOnly);
-            string exePath = files.FirstOrDefault(file => !files.Contains("UnityCrashHandler64"));
+            string exePath = files.FirstOrDefault(file => !file.Contains("UnityCrashHandler64"));
             string exeName = Path.GetFileName(exePath);
             return exeName;
         }
