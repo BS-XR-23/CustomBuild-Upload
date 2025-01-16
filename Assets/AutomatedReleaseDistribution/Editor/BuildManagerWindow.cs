@@ -45,6 +45,8 @@ namespace In.App.Update
             releaseDataPath = Path.Combine(Application.persistentDataPath, releaseDataFileName);
             versionName = PlayerSettings.bundleVersion;
             executableName = PlayerSettings.productName;
+            GoogleDriveFileManager.GetInstance().GetLatestVersions();
+            Debug.Log("on enabled called");
             await LoadVersions();
         }
 
@@ -265,18 +267,18 @@ namespace In.App.Update
                 .Select(scene => scene.path)
                 .ToArray();
 
+            string exePath =EditorUserBuildSettings.activeBuildTarget==BuildTarget.StandaloneOSX? Path.Combine(fullBuildPath, executableName):Path.Combine(fullBuildPath, $"{executableName}.exe");
             // Build options
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = scenes,
-                locationPathName = Path.Combine(fullBuildPath, executableName),
+                locationPathName =exePath,
                 target = EditorUserBuildSettings.activeBuildTarget,
                 options = BuildOptions.None
             };
 
             // Perform the build
             BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
-
 
             // Log the result
             if (report.summary.result == BuildResult.Succeeded)

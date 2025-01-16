@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -223,7 +224,9 @@ namespace In.App.Update
                 await GoogleDriveFileManager.GetInstance().DownloadFileAsync(file.Id, releaseDataPath);
             }
             string releaseDataString = await System.IO.File.ReadAllTextAsync(releaseDataPath);
-            return JsonConvert.DeserializeObject<List<VersionData>>(releaseDataString); 
+            List<VersionData> versions = JsonConvert.DeserializeObject<List<VersionData>>(releaseDataString);
+            versions=versions.OrderByDescending(v => v.versionName).ToList();
+            return versions; 
         }
         public async UniTask<List<VersionData>> GetLatestVersions()
         {
