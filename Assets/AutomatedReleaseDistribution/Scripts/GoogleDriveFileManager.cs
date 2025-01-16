@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using EasyAPIPlugin;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
@@ -219,6 +218,7 @@ namespace In.App.Update
             if (!System.IO.File.Exists(releaseDataPath))
             {
                 Google.Apis.Drive.v3.Data.File file=await GoogleDriveFileManager.GetInstance().GetFileByNameAsync(Path.GetFileName(releaseDataPath),Application.productName);
+                if (file == null) return new List<VersionData>();
                 await GoogleDriveFileManager.GetInstance().DownloadFileAsync(file.Id, releaseDataPath);
             }
             string releaseDataString = await System.IO.File.ReadAllTextAsync(releaseDataPath);
@@ -270,7 +270,7 @@ namespace In.App.Update
         public async UniTask<File> GetFileByNameAsync( string fileName,string folderName)
         {
             if (_driveService == null) _driveService = await GetDriveService(); 
-            File folder =await GetFolderIdByName(folderName);
+            File folder =await GetFolder(folderName);
             var query = $"'{folder.Id}' in parents and name = '{fileName}'  and trashed = false";
             var request = _driveService.Files.List();
             request.Q = query;
