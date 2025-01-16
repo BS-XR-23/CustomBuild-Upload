@@ -214,7 +214,8 @@ namespace In.App.Update
 
         public async UniTask<List<VersionData>> GetVersions()
         {
-            string releaseDataPath = Path.Combine(Application.persistentDataPath, "release_data.json");
+            
+            string releaseDataPath = Path.Combine(Application.persistentDataPath,UpdateManager.releaseDataFileName );
             if (!System.IO.File.Exists(releaseDataPath))
             {
                 Google.Apis.Drive.v3.Data.File file=await GoogleDriveFileManager.GetInstance().GetFileByNameAsync(Path.GetFileName(releaseDataPath),Application.productName);
@@ -226,7 +227,7 @@ namespace In.App.Update
         }
         public async UniTask<List<VersionData>> GetLatestVersions()
         {
-            string releaseDataPath = Path.Combine(Application.persistentDataPath, "release_data.json");
+            string releaseDataPath = Path.Combine(Application.persistentDataPath,UpdateManager.releaseDataFileName);
             Google.Apis.Drive.v3.Data.File file=await GoogleDriveFileManager.GetInstance().GetFileByNameAsync(Path.GetFileName(releaseDataPath),Application.productName);
             await GoogleDriveFileManager.GetInstance().DownloadFileAsync(file.Id, releaseDataPath);
             string releaseDataString = await System.IO.File.ReadAllTextAsync(releaseDataPath);
@@ -333,7 +334,7 @@ namespace In.App.Update
             {
                 using (var stream = new FileStream(_credentialsPath, FileMode.Open, FileAccess.Read))
                 {
-                    string credPath =Path.Combine(Application.dataPath, "Editor", "token.json");;
+                    string credPath =tokenPath;
                     _credential =await GoogleWebAuthorizationBroker.AuthorizeAsync(
                         GoogleClientSecrets.Load(stream).Secrets,
                         _scopes,
@@ -393,7 +394,7 @@ namespace In.App.Update
         public async UniTask<DriveService> GetDriveService()
         {
             
-            string tokenData =JsonCryptoUtility.DecryptJsonFromFile(Path.Combine(Application.streamingAssetsPath, "token.json"));
+            string tokenData =JsonCryptoUtility.DecryptJsonFromFile(tokenPath);
             TokenResponse tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(tokenData);
             ClientSecrets clientSecrets = new ClientSecrets
             {
