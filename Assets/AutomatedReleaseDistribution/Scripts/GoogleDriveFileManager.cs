@@ -232,26 +232,27 @@ namespace In.App.Update
         {
             string releaseDataPath = Path.Combine(Application.persistentDataPath,UpdateManager.releaseDataFileName);
             Google.Apis.Drive.v3.Data.File file=await GoogleDriveFileManager.GetInstance().GetFileByNameAsync(Path.GetFileName(releaseDataPath),Application.productName);
+            if (file == null) return new List<VersionData>();
             await GoogleDriveFileManager.GetInstance().DownloadFileAsync(file.Id, releaseDataPath);
             string releaseDataString = await System.IO.File.ReadAllTextAsync(releaseDataPath);
             return JsonConvert.DeserializeObject<List<VersionData>>(releaseDataString); 
         }
-        private async UniTask<File> GetFolder(string folderName)
+        private async UniTask<File> GetFolder(string folderName,string parentFolderName="Automated Release Distribution")
         {
             File folder =await GetFolderIdByName(folderName);
             if (folder==null)
             {
-                folder =await CreateFolder(folderName);
+                folder =await CreateFolder(folderName,parentFolderName);
             }
             return folder;
         }
-        private async UniTask<File> CreateFolder(string folderName)
+        private async UniTask<File> CreateFolder(string folderName,string parentFolderName)
         {
             File file = new File();
             file.MimeType = "application/vnd.google-apps.folder";
             file.Name = folderName;
-            File parentFolder = await GetFolderIdByName("Automated Release Distribution");
-            file.Parents=new List<string>{parentFolder.Id};
+            File parentFolder = await GetFolderIdByName(parentFolderName);
+            if(parentFolder!=null) file.Parents=new List<string>{parentFolder.Id};
             FilesResource.CreateRequest createRequest= _driveService.Files.Create(file);
             createRequest.Fields = "id, webViewLink, webContentLink"; // Specify the fields you want to retrieve
             File folder = await createRequest.ExecuteAsync();
@@ -331,34 +332,27 @@ namespace In.App.Update
                 _ => "application/octet-stream", // Default for unknown types
             };
         }
-        private async UniTask InitializeGoogleDriveService()
+        public async UniTask InitializeGoogleDriveService()
         {
-            try
+            
+            using (var stream = new FileStream(_credentialsPath, FileMode.Open, FileAccess.Read))
             {
-                using (var stream = new FileStream(_credentialsPath, FileMode.Open, FileAccess.Read))
-                {
-                    string credPath =tokenPath;
-                    _credential =await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                        GoogleClientSecrets.Load(stream).Secrets,
-                        _scopes,
-                        "user",
-                        CancellationToken.None,
-                        new FileDataStore(credPath, true));
-                    Debug.Log($"access toke:{_credential.Token.AccessToken}");
-                }
-                // Create Drive API service
-                _driveService = new DriveService(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = _credential,
-                    ApplicationName = "Automated Release Distribution",
-                });
-                
-                Debug.Log("Google Drive service initialized successfully.");
+                _credential =await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.Load(stream).Secrets,
+                    _scopes,
+                    "user",
+                    CancellationToken.None);
+                string path=tokenPath;
+                JsonCryptoUtility.EncryptJsonToFile(path,JsonConvert.SerializeObject(_credential.Token));
+                Debug.Log($"access token:{_credential.Token.AccessToken}");
             }
-            catch (Exception ex)
-            {
-                Debug.LogError("Error initializing Google Drive service: " + ex.Message);
-            }
+            await CreateRootFolder();
+            Debug.Log("Google Drive service initialized successfully.");
+        }
+
+        private async UniTask CreateRootFolder(string folderName="Automated Release Distribution")
+        {
+            await GetFolder(folderName);
         }
         public async UniTask<TokenResponse> RefreshAccessTokenAsync(TokenResponse tokenResponse,ClientSecrets clientSecrets)
         {

@@ -27,10 +27,39 @@ namespace In.App.Update
         private Button cancelButton;
         private VisualElement progressDialog;
         private Label CurrentVersion;
-        private void Start()
+        private async void Start()
         {
             Initialize();
-            
+            // https://drive.google.com/file/d/1JDN5rrOPcmZlNTCqrATeDFJgagPlkNQl/view?usp=drive_link
+            // https://drive.google.com/file/d/1vkU28dWzrsRpU2slaKNGCjMqDq6gflFs/view?usp=drive_link
+            // https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=drive_link
+            // https://drive.google.com/file/d/1PSqFJT-kAeFCfvaZ2o7j7seftCdMRzwH/view?usp=drive_link
+            // https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=drive_link
+            // https://drive.google.com/file/d/11sbISPZVVPeu45L6Bz9xu9pegXRvw6Se/view?usp=drive_link
+           long size= await GoogleDriveFileManager.GetInstance().GetFileSize(ExtractFileIdFromLink("https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=sharing"));
+           Debug.Log("size:"+size);
+        }
+        public string ExtractFileIdFromLink(string sharedLink)
+        {
+            // Patterns to match different types of Google Drive links
+            var patterns = new[]
+            {
+                @"https:\/\/drive\.google\.com\/file\/d\/(.+?)\/", // Matches /file/d/<file_id>/
+                @"https:\/\/drive\.google\.com\/open\?id=(.+?)(&|$)", // Matches open?id=<file_id>
+                @"https:\/\/drive\.google\.com\/uc\?id=(.+?)(&|$)" // Matches uc?id=<file_id>
+            };
+
+            foreach (var pattern in patterns)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(sharedLink, pattern);
+                if (match.Success)
+                {
+                    return match.Groups[1].Value; // Return the captured file ID
+                }
+            }
+
+            Debug.LogError("Invalid Google Drive shared link.");
+            return null;
         }
 
         private void Initialize()

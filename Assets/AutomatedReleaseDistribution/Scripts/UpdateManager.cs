@@ -28,8 +28,7 @@ namespace In.App.Update
         private string localPath = Application.dataPath; // Path to the current executable
         private VersionData downloadedVersion;
         private CancellationTokenSource cts;
-
-        // https://drive.google.com/file/d/1lT8Jn63qc1fknH4i4cM2zNurteQVVNpv/view?usp=sharing
+        
         private Dictionary<RuntimePlatform, BaseAppUpdater> updaters = new()
         {
             { RuntimePlatform.WindowsPlayer, new WindowsAppUpdater() },

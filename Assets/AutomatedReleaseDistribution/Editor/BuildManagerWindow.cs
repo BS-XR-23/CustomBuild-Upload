@@ -39,6 +39,12 @@ namespace In.App.Update
         {
             GetWindow<BuildManagerWindow>("Build Manager");
         }
+        [MenuItem("Tools/Connect To Drive")]
+        public async static void ConnectToGoogleDrive()
+        {
+            await GoogleDriveFileManager.GetInstance().InitializeGoogleDriveService();
+            Debug.Log("connected successfully");
+        }
 
         private async void OnEnable()
         {
@@ -235,7 +241,7 @@ namespace In.App.Update
 
             // Build Button
             EditorGUI.BeginDisabledGroup(!IsValidVersion(versionName));
-            if (GUILayout.Button("Build"))
+            if (GUILayout.Button("Build And Publish"))
             {
                 PerformBuild();
             }
