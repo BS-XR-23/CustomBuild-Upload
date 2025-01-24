@@ -10,16 +10,18 @@ for %%i in ("%BUILD_PATH%") do set "FILE_NAME=%%~nxi"
 set "RELEASE_DATA_PATH=[release_data_path]"
 for %%i in ("%RELEASE_DATA_PATH%") do set "RELEASE_DATA_FILE_NAME=%%~nxi"
 
-
+echo =============================Build Compressing......==============================
 pushd "%BUILD_FOLDER%"
 tar.exe -a -cf "%BUILD_PATH%" *
 popd
 set NEW_FILE_ID=""
 set FILE_ID=""
 
+echo =============================Checking Existing File==============================
 :: Function to get file ID from Google Drive
 call:get_fileid %FILE_NAME% %PARENT_FOLDER_ID%
 
+echo =============================Build Uploading====================================
   :: Main Script Execution
 if %FILE_ID%=="" (
   set NEW_FILE_ID=""
@@ -29,11 +31,11 @@ if %FILE_ID%=="" (
   call :update_file %FILE_NAME% %FILE_ID% %PARENT_FOLDER_ID% \"%BUILD_PATH%\"
   set NEW_FILE_ID=%FILE_ID%
 )
-echo ==================New File Id:%NEW_FILE_ID%=========================
+echo ==================Build Uploaded. New File Id:%NEW_FILE_ID%=========================
 
 call :update_file_id
 call :upload_or_update_release_data
-echo ============================Process Done==============================
+echo ==============================Process Done=========================================
 exit /b
 
 :get_fileid
@@ -89,7 +91,7 @@ goto :eof
   set file_id=%2
   set folder_id=%3
   set build_path=%4
-  echo "=============================Updating existing file with Id:%file_id%======================================="
+  echo =============================Updating existing file with Id:%file_id%=======================================
   curl -v -s -X  PATCH ^
     "https://www.googleapis.com/upload/drive/v3/files/%file_id%?uploadType=multipart&addParents=%folder_id%&removeParents=%folder_id%" ^
     -H "Authorization: Bearer %ACCESS_TOKEN%" ^
@@ -118,6 +120,7 @@ goto :eof
   call:get_fileid %RELEASE_DATA_FILE_NAME% %PARENT_FOLDER_ID%
   set RELEASE_FILE_ID=%FILE_ID%
   echo RELEASE_FILE_ID: %RELEASE_FILE_ID%
+  echo =============================Uploading Release Metadata==============================
   if %RELEASE_FILE_ID%=="" (
     call:upload_file %RELEASE_DATA_FILE_NAME% %PARENT_FOLDER_ID% \"%RELEASE_DATA_PATH%\"
   )
