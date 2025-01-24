@@ -30,14 +30,7 @@ namespace In.App.Update
         private async void Start()
         {
             Initialize();
-            // https://drive.google.com/file/d/1JDN5rrOPcmZlNTCqrATeDFJgagPlkNQl/view?usp=drive_link
-            // https://drive.google.com/file/d/1vkU28dWzrsRpU2slaKNGCjMqDq6gflFs/view?usp=drive_link
-            // https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=drive_link
-            // https://drive.google.com/file/d/1PSqFJT-kAeFCfvaZ2o7j7seftCdMRzwH/view?usp=drive_link
-            // https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=drive_link
-            // https://drive.google.com/file/d/11sbISPZVVPeu45L6Bz9xu9pegXRvw6Se/view?usp=drive_link
-           long size= await GoogleDriveFileManager.GetInstance().GetFileSize(ExtractFileIdFromLink("https://drive.google.com/file/d/1scl-JWShfKu2SftynKJK5tDM7WLosf8A/view?usp=sharing"));
-           Debug.Log("size:"+size);
+          
         }
         public string ExtractFileIdFromLink(string sharedLink)
         {

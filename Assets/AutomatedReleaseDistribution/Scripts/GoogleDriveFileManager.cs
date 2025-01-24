@@ -237,7 +237,7 @@ namespace In.App.Update
             string releaseDataString = await System.IO.File.ReadAllTextAsync(releaseDataPath);
             return JsonConvert.DeserializeObject<List<VersionData>>(releaseDataString); 
         }
-        private async UniTask<File> GetFolder(string folderName,string parentFolderName="Automated Release Distribution")
+        public async UniTask<File> GetFolder(string folderName,string parentFolderName="Automated Release Distribution")
         {
             File folder =await GetFolderIdByName(folderName);
             if (folder==null)
@@ -400,6 +400,7 @@ namespace In.App.Update
             };
             
             tokenResponse =await GetAccessToken(tokenResponse,clientSecrets);
+            Debug.Log($"tokenResponse:{tokenResponse.AccessToken}");
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
                 ClientSecrets = clientSecrets
@@ -412,6 +413,21 @@ namespace In.App.Update
                 HttpClientInitializer = credential,
                 ApplicationName = "Automated Release Distribution"
             });
+        }
+        public string GetLatestToken()
+        {
+            if (!System.IO.File.Exists(tokenPath)) return null;
+             string tokenData =JsonCryptoUtility.DecryptJsonFromFile(tokenPath);
+            TokenResponse tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(tokenData);
+            return tokenResponse.AccessToken;
+        }
+
+        public void DeleteToken()
+        {
+            if (System.IO.File.Exists(tokenPath))
+            {
+                System.IO.File.Delete(tokenPath);
+            }
         }
         // Method to get the access token from the _credential
         public async UniTask<TokenResponse> GetAccessToken(TokenResponse tokenResponse,ClientSecrets clientSecrets)

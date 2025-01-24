@@ -14,6 +14,8 @@ using In.App.Update;
 using In.App.Update.DataModel;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using UnityEngine.WSA;
+using Application = UnityEngine.Application;
 using CompressionLevel = System.IO.Compression.CompressionLevel;
 using Debug = UnityEngine.Debug;
 using File = System.IO.File;
@@ -25,7 +27,7 @@ namespace In.App.Update
         private string versionName = "1.0.0";
         private string releaseTitle = "Initial Release";
         private string releaseNotes = "Add release notes here...";
-        private string buildPath = "Builds";
+        private string buildPath =Path.Combine(Application.dataPath,"..","Builds");
         private string executableName = "MyGame";
         public static string releaseDataFileName = UpdateManager.releaseDataFileName;
         private string releaseDataPath;
@@ -34,18 +36,41 @@ namespace In.App.Update
 
         private List<VersionData> versions = new List<VersionData>();
 
+        private static bool isConnected = false; 
         [MenuItem("Tools/Build Manager")]
         public static void ShowWindow()
         {
             GetWindow<BuildManagerWindow>("Build Manager");
         }
+        // Validation function for visibility
+        [MenuItem("Tools/Connect To Drive", true)] // This determines visibility
+        public static bool ValidateConnectToDrive()
+        {
+            isConnected = GoogleDriveFileManager.GetInstance().GetLatestToken() != null;
+            return !isConnected;
+        }
+        
         [MenuItem("Tools/Connect To Drive")]
         public async static void ConnectToGoogleDrive()
         {
-            await GoogleDriveFileManager.GetInstance().InitializeGoogleDriveService();
+             await GoogleDriveFileManager.GetInstance().InitializeGoogleDriveService();
             Debug.Log("connected successfully");
         }
+        
+        [MenuItem("Tools/Disconnect From Drive", true)] // This determines visibility
+        public static bool ValidateDisconnectGoogleDrive()
+        {
+            return isConnected;
+        }
+        [MenuItem("Tools/Disconnect From Drive")]
+        public static void DisconnectGoogleDrive()
+        {
+            GoogleDriveFileManager.GetInstance().DeleteToken();
+            isConnected = false;
+            Debug.Log("disconnected successfully");
+        }
 
+       
         private async void OnEnable()
         {
             releaseDataPath = Path.Combine(Application.persistentDataPath, releaseDataFileName);
@@ -289,11 +314,13 @@ namespace In.App.Update
             // Log the result
             if (report.summary.result == BuildResult.Succeeded)
             {
+               
                 Debug.Log($"Build succeeded: {fullBuildPath}");
+                PlayerSettings.bundleVersion = versionName;
                 string zipFilePath = Path.Combine(buildPath, $"v{versionName}.zip");
-                await CreateZip(fullBuildPath, zipFilePath);
+                //await CreateZip(fullBuildPath, zipFilePath);
                 Debug.Log($"Build output zipped at: {zipFilePath}");
-                UploadBuild(zipFilePath);
+                UploadBuildFromTerminal(fullBuildPath,zipFilePath);
             }
             else
             {
@@ -301,7 +328,7 @@ namespace In.App.Update
             }
         }
 
-        public async void UploadBuild(string buildPath)
+        public async void UploadBuild(string buildFolder,string buildPath)
         {
             Debug.Log($"Uploading build...:{buildPath}");
             string fileName = Path.GetFileName(buildPath);
@@ -352,6 +379,72 @@ namespace In.App.Update
             else
                 releaseFile = await GoogleDriveFileManager.GetInstance()
                     .UpdateFileAsync(releaseDataPath, existingFile.Id, Application.productName);
+        }
+        public async void UploadBuildFromTerminal(string buildFolder,string buildPath)
+        {
+            Debug.Log($"Uploading build...:{buildPath}");
+            await GoogleDriveFileManager.GetInstance().GetDriveService(); 
+            string fileName = Path.GetFileName(buildPath);
+            VersionData versionData = new VersionData()
+            {
+                versionName = versionName,
+                versionCode = GoogleDriveFileManager.GetInstance().GetVersionCode(versionName),
+                releaseTitle = releaseTitle,
+                releaseNotes = releaseNotes,
+                exeName = executableName,
+                fileId ="[file_id]"
+            };
+            string releaseDataString;
+            List<VersionData> versionDataList = new List<VersionData>();
+            Google.Apis.Drive.v3.Data.File existingFile = null;
+            
+            existingFile = await GoogleDriveFileManager.GetInstance()
+                .GetFileByNameAsync(releaseDataFileName, Application.productName);
+            if (existingFile != null)
+                await GoogleDriveFileManager.GetInstance()
+                    .DownloadFileAsync(existingFile.Id, releaseDataPath, onProgress:(progress) => { });
+
+            if (File.Exists(releaseDataPath))
+            {
+                releaseDataString = await File.ReadAllTextAsync(releaseDataPath);
+                versionDataList = JsonConvert.DeserializeObject<List<VersionData>>(releaseDataString);
+            }
+           
+            int index = versionDataList.FindIndex((item) => item.versionName == versionName);
+            if (index >= 0) versionDataList[index] = versionData;
+            else versionDataList.Add(versionData);
+            
+            releaseDataString = JsonConvert.SerializeObject(versionDataList);
+            await File.WriteAllTextAsync(releaseDataPath, releaseDataString);
+          
+            Google.Apis.Drive.v3.Data.File parentFolder=await GoogleDriveFileManager.GetInstance().GetFolder(Application.productName);
+            if(parentFolder!=null) RunBatFile(buildFolder,buildPath,releaseDataPath,parentFolder.Id);
+            Debug.Log($"Build Preprocessed Successfully:{buildPath}");
+            Debug.Log($"Check Terminal To See The Progress");
+
+        }
+
+        private async static void RunBatFile(string buildFolder,string buildPath,string releaseDataPath,string folderId)
+        {
+            string accessToken = GoogleDriveFileManager.GetInstance().GetLatestToken();
+            string batFilePath = Path.Combine(Application.dataPath, "AutomatedReleaseDistribution", "Editor","uploader.bat");
+            string batFileText=await File.ReadAllTextAsync(batFilePath);
+            batFileText = batFileText.Replace("[access_token]",accessToken );
+            batFileText = batFileText.Replace("[folder_id]",folderId );
+            batFileText = batFileText.Replace("[build_path]",buildPath );
+            batFileText = batFileText.Replace("[build_folder]",buildFolder );
+            batFileText = batFileText.Replace("[release_data_path]",releaseDataPath );
+            string updateBatFilePath = Path.Combine(Application.persistentDataPath, "uploader.bat");
+            await File.WriteAllTextAsync(updateBatFilePath,batFileText);
+            Process updaterProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = updateBatFilePath,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            });
+
+            // Wait for the updater process to exit before quitting the app
+            //updaterProcess.WaitForExit();
         }
 
         private async UniTask CreateZip(string sourceDirectory, string zipFilePath)
