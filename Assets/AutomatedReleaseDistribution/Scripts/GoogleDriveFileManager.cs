@@ -184,7 +184,7 @@ namespace In.App.Update
 
                 if (file.Size.HasValue)
                 {
-                    Debug.Log($"File size: {file.Size.Value} bytes");
+                    //Debug.Log($"File size: {file.Size.Value} bytes");
                     return file.Size.Value;
                 }
                 else

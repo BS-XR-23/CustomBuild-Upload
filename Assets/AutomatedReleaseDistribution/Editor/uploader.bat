@@ -10,32 +10,33 @@ for %%i in ("%BUILD_PATH%") do set "FILE_NAME=%%~nxi"
 set "RELEASE_DATA_PATH=[release_data_path]"
 for %%i in ("%RELEASE_DATA_PATH%") do set "RELEASE_DATA_FILE_NAME=%%~nxi"
 
-echo =============================Build Compressing......==============================
+echo Build Compressing......
 pushd "%BUILD_FOLDER%"
 tar.exe -a -cf "%BUILD_PATH%" *
 popd
 set NEW_FILE_ID=""
 set FILE_ID=""
 
-echo =============================Checking Existing File==============================
+echo Checking Existing File....
 :: Function to get file ID from Google Drive
 call:get_fileid %FILE_NAME% %PARENT_FOLDER_ID%
 
-echo =============================Build Uploading====================================
+echo Build Uploading....
   :: Main Script Execution
 if %FILE_ID%=="" (
   set NEW_FILE_ID=""
   call :upload_file %FILE_NAME% %PARENT_FOLDER_ID% \"%BUILD_PATH%\"
-  echo ==================Uploaded File Id:%NEW_FILE_ID%=========================
+  echo Uploaded File Id:%NEW_FILE_ID%
 ) else (
   call :update_file %FILE_NAME% %FILE_ID% %PARENT_FOLDER_ID% \"%BUILD_PATH%\"
   set NEW_FILE_ID=%FILE_ID%
 )
-echo ==================Build Uploaded. New File Id:%NEW_FILE_ID%=========================
+echo Build Uploaded. New File Id:%NEW_FILE_ID%
 
 call :update_file_id
 call :upload_or_update_release_data
 echo ==============================Process Done=========================================
+pause 
 exit /b
 
 :get_fileid
@@ -49,7 +50,7 @@ exit /b
     ^| findstr /i "id"') do ( set FILE_ID=%%i )
   :: Check if the FILE_ID is empty, meaning no file was found
   if %FILE_ID%=="" (
-      echo ======================No file found with the given name and parent folder======================
+      echo No file found with the given name and parent folder
   ) else (
       :: Clean up the FILE_ID by removing any extra quotes or characters
       set FILE_ID=%FILE_ID:"=%
@@ -65,17 +66,17 @@ goto :eof
   set file_name=%1
   set folder_id=%2
   set build_path=%3
-  echo =============================Uploading file: %FILE_NAME% =======================================
+  echo Uploading file: %file_name% ..... 
   set NEW_FILE_ID=
-  for /f "tokens=2 delims=:," %%i in ('curl -v -s -X POST ^
+  for /f "tokens=2 delims=:," %%i in ('curl -s -X POST ^
   "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart" --progress-bar ^
   -H "Authorization: Bearer %ACCESS_TOKEN%" ^
   -F "metadata={\"name\":\"%file_name%\",\"parents\":[\"%folder_id%\"]};type=application/json" ^
   -F "file=@%build_path%"  ^ 
   ^| findstr /i "id"')  do ( set NEW_FILE_ID=%%i )
 
-    if %NEW_FILE_ID%=="" (
-      echo ======================No file found with the given name in parent folder======================
+  if %NEW_FILE_ID%=="" (
+      echo No file found with the given name in parent folder
   ) else (
       :: Clean up the FILE_ID by removing any extra quotes or characters
       set NEW_FILE_ID=%NEW_FILE_ID:"=%
@@ -91,8 +92,8 @@ goto :eof
   set file_id=%2
   set folder_id=%3
   set build_path=%4
-  echo =============================Updating existing file with Id:%file_id%=======================================
-  curl -v -s -X  PATCH ^
+  echo Updating existing file:%file_name% ....
+  curl -s -X  PATCH ^
     "https://www.googleapis.com/upload/drive/v3/files/%file_id%?uploadType=multipart&addParents=%folder_id%&removeParents=%folder_id%" ^
     -H "Authorization: Bearer %ACCESS_TOKEN%" ^
     -F "metadata={\"name\":\"%file_name%\"};type=application/json" ^
@@ -120,13 +121,14 @@ goto :eof
   call:get_fileid %RELEASE_DATA_FILE_NAME% %PARENT_FOLDER_ID%
   set RELEASE_FILE_ID=%FILE_ID%
   echo RELEASE_FILE_ID: %RELEASE_FILE_ID%
-  echo =============================Uploading Release Metadata==============================
+  echo Uploading Release Metadata....
   if %RELEASE_FILE_ID%=="" (
     call:upload_file %RELEASE_DATA_FILE_NAME% %PARENT_FOLDER_ID% \"%RELEASE_DATA_PATH%\"
   )
   else (
     call:update_file %RELEASE_DATA_FILE_NAME% %RELEASE_FILE_ID% %PARENT_FOLDER_ID% \"%RELEASE_DATA_PATH%\"
   )
+  
 goto :eof
 
 
