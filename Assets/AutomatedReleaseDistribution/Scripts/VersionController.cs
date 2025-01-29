@@ -30,7 +30,6 @@ namespace In.App.Update
         private async void Start()
         {
             Initialize();
-          
         }
         public string ExtractFileIdFromLink(string sharedLink)
         {

@@ -46,14 +46,14 @@ namespace In.App.Update
         [MenuItem("Tools/Connect To Drive", true)] // This determines visibility
         public static bool ValidateConnectToDrive()
         {
-            isConnected = GoogleDriveFileManager.GetInstance().GetLatestToken() != null;
+            isConnected = GoogleDriveFileManager.GetInstance().IsConnected();
             return !isConnected;
         }
         
         [MenuItem("Tools/Connect To Drive")]
         public async static void ConnectToGoogleDrive()
         {
-             await GoogleDriveFileManager.GetInstance().InitializeGoogleDriveService();
+             await GoogleDriveFileManager.GetInstance().Connect();
             Debug.Log("connected successfully");
         }
         
@@ -65,9 +65,37 @@ namespace In.App.Update
         [MenuItem("Tools/Disconnect From Drive")]
         public static void DisconnectGoogleDrive()
         {
-            GoogleDriveFileManager.GetInstance().DeleteToken();
+            GoogleDriveFileManager.GetInstance().Disconnect();
             isConnected = false;
             Debug.Log("disconnected successfully");
+        }
+        [MenuItem("Tools/RunScript")]
+        public static void RunScript()
+        {
+            string scriptPath = Path.Combine(Application.dataPath, "AutomatedReleaseDistribution", "Editor", "test.sh");
+            try
+            {
+                Process process = new Process();
+                string escapedPath = scriptPath;
+                // Set the process start info for macOS
+                process.StartInfo.FileName = "osascript";
+                process.StartInfo.Arguments = $"-e 'tell application \"Terminal\" to do script \"bash \\\"{escapedPath}\\\"\"'";
+                Debug.Log($"-e 'tell application \"Terminal\" to do script \"bash \\\"{escapedPath}\\\"\"'");
+                // UseShellExecute is true to allow the GUI terminal to open
+                process.StartInfo.UseShellExecute = true;
+
+                // Do NOT redirect IO streams when UseShellExecute is true
+                process.StartInfo.RedirectStandardOutput = false;
+                process.StartInfo.RedirectStandardError = false;
+                process.StartInfo.RedirectStandardInput = false;
+
+                // Start the process
+                process.Start();
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogError("Exception: " + e.Message);
+            }
         }
 
        
@@ -414,11 +442,12 @@ namespace In.App.Update
             if (index >= 0) versionDataList[index] = versionData;
             else versionDataList.Add(versionData);
             
+            string tempReleaseDataPath = Path.Combine(Application.dataPath,"AutomatedReleaseDistribution", "Editor", releaseDataFileName);
             releaseDataString = JsonConvert.SerializeObject(versionDataList);
-            await File.WriteAllTextAsync(releaseDataPath, releaseDataString);
+            await File.WriteAllTextAsync(tempReleaseDataPath, releaseDataString);
           
             Google.Apis.Drive.v3.Data.File parentFolder=await GoogleDriveFileManager.GetInstance().GetFolder(Application.productName);
-            if(parentFolder!=null) RunBatFile(buildFolder,buildPath,releaseDataPath,parentFolder.Id);
+            if(parentFolder!=null) RunBatFile(buildFolder,buildPath,tempReleaseDataPath,parentFolder.Id);
             Debug.Log($"Build Preprocessed Successfully:{buildPath}");
             Debug.Log($"Check Terminal To See The Progress");
 
@@ -427,25 +456,48 @@ namespace In.App.Update
         private async static void RunBatFile(string buildFolder,string buildPath,string releaseDataPath,string folderId)
         {
             string accessToken = GoogleDriveFileManager.GetInstance().GetLatestToken();
-            string batFilePath = Path.Combine(Application.dataPath, "AutomatedReleaseDistribution", "Editor","uploader.bat");
+            string executableName = EditorUserBuildSettings.activeBuildTarget==BuildTarget.StandaloneOSX?"uploader.sh":"uploader.bat";
+            string batFilePath = Path.Combine(Application.dataPath, "AutomatedReleaseDistribution", "Editor",executableName);
             string batFileText=await File.ReadAllTextAsync(batFilePath);
             batFileText = batFileText.Replace("[access_token]",accessToken );
             batFileText = batFileText.Replace("[folder_id]",folderId );
             batFileText = batFileText.Replace("[build_path]",buildPath );
             batFileText = batFileText.Replace("[build_folder]",buildFolder );
             batFileText = batFileText.Replace("[release_data_path]",releaseDataPath );
-            string updateBatFilePath = Path.Combine(Application.persistentDataPath, "uploader.bat");
+            string updateBatFilePath = Path.Combine(Application.persistentDataPath, executableName);
             await File.WriteAllTextAsync(updateBatFilePath,batFileText);
-            Process updaterProcess = Process.Start(new ProcessStartInfo
+            if (EditorUserBuildSettings.activeBuildTarget==BuildTarget.StandaloneOSX)
             {
-                FileName = updateBatFilePath,
-                UseShellExecute = true,
-                CreateNoWindow = false
-            });
-
-            // Wait for the updater process to exit before quitting the app
-            //updaterProcess.WaitForExit();
+                try
+                {
+                    Process process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "osascript",          // Bash path
+                        Arguments = $"-e 'tell application \"Terminal\" to do script \"bash \\\"{updateBatFilePath}\\\"\"'", // Script path and arguments
+                        UseShellExecute = true,// Enable redirection
+                        CreateNoWindow = false// Do not show a terminal window
+                    });
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Exception: {e.Message}");
+                }
+                
+            }
+            else
+            {
+                Process updaterProcess = Process.Start(new ProcessStartInfo
+                {
+                    FileName = updateBatFilePath,
+                    UseShellExecute = true,
+                    CreateNoWindow = false
+                });
+                // Wait for the updater process to exit before quitting the app
+                //updaterProcess.WaitForExit();
+            }
+           
         }
+        
 
         private async UniTask CreateZip(string sourceDirectory, string zipFilePath)
         {

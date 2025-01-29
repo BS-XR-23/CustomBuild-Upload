@@ -26,6 +26,7 @@ namespace In.App.Update
         private string[] _scopes = { DriveService.Scope.DriveFile };
         private UserCredential _credential;
         private string tokenPath => Path.Combine(Application.streamingAssetsPath, "token.json");
+        private string credPath=Path.Combine(Application.dataPath,"AutomatedReleaseDistribution","Editor", "token.json");
         private string _credentialsPath =>
             Path.Combine(Application.streamingAssetsPath,
                 "google_api_credentials.json"); // Replace with your JSON credentials file path
@@ -332,22 +333,38 @@ namespace In.App.Update
                 _ => "application/octet-stream", // Default for unknown types
             };
         }
-        public async UniTask InitializeGoogleDriveService()
+        public async UniTask Connect()
         {
-            
             using (var stream = new FileStream(_credentialsPath, FileMode.Open, FileAccess.Read))
             {
                 _credential =await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,
                     _scopes,
                     "user",
-                    CancellationToken.None);
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true));
                 string path=tokenPath;
                 JsonCryptoUtility.EncryptJsonToFile(path,JsonConvert.SerializeObject(_credential.Token));
                 Debug.Log($"access token:{_credential.Token.AccessToken}");
             }
             await CreateRootFolder();
             Debug.Log("Google Drive service initialized successfully.");
+        }
+        public void Disconnect()
+        {
+            if (System.IO.File.Exists(credPath))
+            {
+                System.IO.File.Delete(credPath);
+            }            
+        }
+
+        public bool IsConnected()
+        {
+            if (Directory.Exists(credPath))
+            {
+                return true;
+            }
+            return false;
         }
 
         private async UniTask CreateRootFolder(string folderName="Automated Release Distribution")
@@ -420,14 +437,6 @@ namespace In.App.Update
              string tokenData =JsonCryptoUtility.DecryptJsonFromFile(tokenPath);
             TokenResponse tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(tokenData);
             return tokenResponse.AccessToken;
-        }
-
-        public void DeleteToken()
-        {
-            if (System.IO.File.Exists(tokenPath))
-            {
-                System.IO.File.Delete(tokenPath);
-            }
         }
         // Method to get the access token from the _credential
         public async UniTask<TokenResponse> GetAccessToken(TokenResponse tokenResponse,ClientSecrets clientSecrets)
