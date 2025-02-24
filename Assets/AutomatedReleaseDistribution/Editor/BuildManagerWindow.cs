@@ -69,7 +69,7 @@ namespace In.App.Update
             isConnected = false;
             Debug.Log("disconnected successfully");
         }
-        [MenuItem("Tools/RunScript")]
+        // [MenuItem("Tools/RunScript")]
         public static void RunScript()
         {
             string scriptPath = Path.Combine(Application.dataPath, "AutomatedReleaseDistribution", "Editor", "test.sh");

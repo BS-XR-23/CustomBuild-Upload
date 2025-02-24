@@ -352,9 +352,10 @@ namespace In.App.Update
         }
         public void Disconnect()
         {
-            if (System.IO.File.Exists(credPath))
+            if (System.IO.Directory.Exists(credPath))
             {
-                System.IO.File.Delete(credPath);
+                Debug.Log("Delele Dir");
+                System.IO.Directory.Delete(credPath,true);
             }            
         }
 

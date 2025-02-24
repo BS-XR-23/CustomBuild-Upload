@@ -11,7 +11,7 @@
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:Button text="Update Available" name="UpdateButton" style="position: absolute; right: 50px; top: 50px; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; background-color: rgb(16, 147, 0); color: rgb(255, 255, 255); font-size: 16px; -unity-font-style: bold; border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; padding-top: 10px; padding-bottom: 10px; padding-left: 12px; padding-right: 12px;" />
-    <ui:VisualElement name="DialogBox" style="position: absolute; margin-left: auto; margin-right: auto; width: 100%; height: 100%; display: none;">
+    <ui:VisualElement name="DialogBox" style="position: absolute; margin-left: auto; margin-right: auto; width: 100%; height: 100%; display: flex;">
         <ui:VisualElement class="dialog-box" style="left: auto; top: 50%; align-self: center; align-content: center; margin-top: auto; margin-bottom: auto; translate: 0 -50%;">
             <ui:Label name="Message" text="Application need to re-start to show latest update" class="dialog-message" style="overflow: hidden; visibility: visible; -unity-text-align: upper-center;" />
             <ui:VisualElement class="dialog-buttons" style="flex-direction: row; flex-wrap: nowrap; align-self: center;">
